@@ -6,31 +6,39 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock auth check
-    const mockUser = localStorage.getItem('user');
-    if (mockUser) {
-      setUser(JSON.parse(mockUser));
-    }
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) setUser(JSON.parse(savedUser));
     setLoading(false);
   }, []);
 
-  const login = (email) => {
-    const mockUser = { id: 1, email, name: 'John Doe' };
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    setUser(mockUser);
+  const login = async (credentials) => {
+    try {
+      const fakeUser = { email: credentials.email };
+      localStorage.setItem("user", JSON.stringify(fakeUser));
+      setUser(fakeUser);
+    } catch (err) {
+      console.error("Login failed:", err);
+    }
+  };
+
+  const signup = async (data) => {
+    try {
+      const newUser = { email: data.email };
+      localStorage.setItem("user", JSON.stringify(newUser));
+      setUser(newUser);
+    } catch (err) {
+      console.error("Signup failed:", err);
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
     setUser(null);
   };
 
-  const value = { user, loading, login, logout };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );
-}
-
+};
