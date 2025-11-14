@@ -12,6 +12,7 @@ export default function HomePage() {
     const mockRooms = [
       {
         id: 1,
+        slug: 'cozy-studio-uon-main',
         title: 'Cozy Studio near UoN Main Campus',
         location: 'Parklands, 5 min walk to campus',
         university: 'University of Nairobi',
@@ -22,6 +23,7 @@ export default function HomePage() {
       },
       {
         id: 2,
+        slug: 'modern-single-room-ku',
         title: 'Modern Single Room - KU Campus',
         location: 'Kahawa Wendani, 10 min from KU',
         university: 'Kenyatta University',
@@ -32,6 +34,7 @@ export default function HomePage() {
       },
       {
         id: 3,
+        slug: 'affordable-bedsitter-jkuat',
         title: 'Affordable Bedsitter JKUAT',
         location: 'Juja, near JKUAT Gate',
         university: 'JKUAT',
@@ -42,6 +45,7 @@ export default function HomePage() {
       },
       {
         id: 4,
+        slug: 'shared-room-daystar',
         title: 'Shared Room near Daystar',
         location: 'Athi River, Walking distance',
         university: 'Daystar University',
@@ -52,6 +56,7 @@ export default function HomePage() {
       },
       {
         id: 5,
+        slug: 'spacious-1br-strathmore',
         title: 'Spacious 1BR near Strathmore',
         location: 'Madaraka, 15 min to campus',
         university: 'Strathmore University',
@@ -62,6 +67,7 @@ export default function HomePage() {
       },
       {
         id: 6,
+        slug: 'budget-single-room-usiu',
         title: 'Budget Single Room USIU',
         location: 'Kasarani, Near USIU',
         university: 'USIU',
@@ -77,8 +83,8 @@ export default function HomePage() {
 
   //triggered when user performs a search
   const handleSearch = (searchParams) => {
-  const params = new URLSearchParams(searchParams);
-  navigate(`/search?${params.toString()}`);
+    const params = new URLSearchParams(searchParams);
+    navigate(`/search?${params.toString()}`);
   };
 
   return (
@@ -169,7 +175,7 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.5 }}
                 whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                onClick={() => navigate(`/hostel/${room.id}`)}
+                onClick={() => navigate(`/hostel/${room.slug}`)}
                 className={`bg-white rounded-3xl overflow-hidden cursor-pointer border-4 ${room.borderColor} shadow-lg hover:shadow-2xl transition-all duration-300 relative group`}
               >
                 {/* bookmark icon */}
@@ -247,17 +253,20 @@ export default function HomePage() {
               {
                 title: 'Direct Connect',
                 description: 'No middlemen or broker fees. Chat directly with verified landlords',
-                color: 'from-purple-400 to-purple-600'
+                color: 'from-purple-400 to-purple-600',
+                icon: '🤝'
               },
               {
                 title: 'Affordable Options',
                 description: 'Find rooms under 20K near your university with transparent pricing',
-                color: 'from-pink-400 to-pink-600'
+                color: 'from-pink-400 to-pink-600',
+                icon: '💰'
               },
               {
                 title: 'Verified Listings',
                 description: 'All landlords verified. Read reviews from fellow students',
-                color: 'from-orange-400 to-orange-600'
+                color: 'from-orange-400 to-orange-600',
+                icon: '✅'
               }
             ].map((feature, index) => (
               <motion.div
@@ -280,7 +289,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section, encourage users to explore available rooms */}
+      {/* CTA Section - FIXED: Added overflow-hidden to prevent circles from showing */}
       <section className="py-16 px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -289,7 +298,7 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="container mx-auto max-w-4xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 rounded-3xl p-12 text-center text-white shadow-2xl relative overflow-hidden"
         >
-          {/* background circles*/}
+          {/* background circles - NOW PROPERLY CONSTRAINED */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full translate-y-1/2 -translate-x-1/2" />
           
@@ -315,7 +324,7 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* post room button, appears on all viewports for easy access by landlords*/}
+      {/* post room button */}
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -325,10 +334,11 @@ export default function HomePage() {
         onClick={() => navigate('/dashboard')}
         className="fixed bottom-8 right-8 bg-gradient-to-r from-orange-500 to-pink-500 text-white px-6 py-4 rounded-full font-bold shadow-2xl flex items-center gap-2 border-3 border-black hover:shadow-3xl transition-all duration-300 z-50"
       >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
         <span className="hidden md:inline">Post Your Room</span>
       </motion.button>
-
-
     </div>
   );
 }
