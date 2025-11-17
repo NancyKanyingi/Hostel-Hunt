@@ -9,4 +9,5 @@ Flask-Login==0.6.2
 Flask-Bcrypt==1.0.1
 SQLAlchemy==2.0.20
 python-dotenv==1.0.0
-psycopg2-binary==2.9.6
+psycopg2==2.9.6
+gunicorn==21.2.0
