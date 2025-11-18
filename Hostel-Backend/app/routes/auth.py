@@ -34,7 +34,7 @@ def register():
     return jsonify({"message": "Registration successful", **response}), 201
 
 
-# Login 
+# Login
 @auth_bp.post("/login")
 def login():
     data = request.get_json()
@@ -44,8 +44,8 @@ def login():
     # Validation
     if not email or not is_valid_email(email):
         return jsonify({"message": "Invalid email address"}), 400
-    if not password or not is_valid_password(password):
-        return jsonify({"message": "Password must be at least 6 characters"}), 400
+    if not password:
+        return jsonify({"message": "Password is required"}), 400
 
     response, error = AuthService.login(email, password)
     if error:

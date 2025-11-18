@@ -1,12 +1,10 @@
 from flask import Flask
 from config import Config
-# app/__init__.py
-from .routes.admin import admin_bp  # your admin routes
 
-# Import CORS
+# CORS
 from flask_cors import CORS
 
-# Import extensions
+# Extensions
 from .extensions.db import db
 from .extensions.jwt import jwt
 try:
@@ -14,7 +12,11 @@ try:
 except Exception:
     mail = None
 
-# Import blueprints
+# Flask-Migrate
+from flask_migrate import Migrate
+
+# Blueprints
+from .routes.admin import admin_bp
 from .routes.auth import auth_bp
 try:
     from .routes.hostels import hostels_bp
@@ -42,6 +44,9 @@ except Exception:
     analytics_bp = None
 
 
+# Initialize migrate globally
+migrate = Migrate()
+
 def create_app():
     """Create and configure the Flask application."""
     app = Flask(__name__)
@@ -55,10 +60,10 @@ def create_app():
 
     # Initialize extensions
     db.init_app(app)
+    migrate.init_app(app, db)  # <-- add this for Flask-Migrate
     try:
         jwt.init_app(app)
     except Exception:
-        # JWT extension may be optional in some environments
         pass
     try:
         mail.init_app(app)
@@ -82,5 +87,15 @@ def create_app():
 
     # Register admin blueprint
     app.register_blueprint(admin_bp, url_prefix="/admin")
+
+    # Add root route
+    @app.route('/')
+    def index():
+        return {'message': 'Welcome to Hostel Hunt Backend API'}
+
+    # Add favicon route to prevent 404
+    @app.route('/favicon.ico')
+    def favicon():
+        return '', 204
 
     return app

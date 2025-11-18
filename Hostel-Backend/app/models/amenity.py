@@ -1,4 +1,5 @@
 from ..extensions import db
+from sqlalchemy.dialects.postgresql import JSON
 
 class Amenity(db.Model):
     __tablename__ = "amenities"

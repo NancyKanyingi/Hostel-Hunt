@@ -162,11 +162,18 @@ class HostelService:
         return hostel_data
 
     @staticmethod
-    def create_hostel(hostel_data, landlord_id):
+    def create_hostel(hostel_data, user_id):
         """Create a new hostel"""
+        from ..models.landlord import Landlord
+
+        # Lookup landlord profile for the user
+        landlord = Landlord.query.filter_by(user_id=user_id).first()
+        if not landlord:
+            raise ValueError("Landlord profile not found for user")
+
         try:
             hostel = Hostel(
-                landlord_id=landlord_id,
+                landlord_id=landlord.id,
                 **hostel_data
             )
             db.session.add(hostel)
@@ -177,11 +184,18 @@ class HostelService:
             raise e
 
     @staticmethod
-    def update_hostel(hostel_id, update_data, landlord_id):
+    def update_hostel(hostel_id, update_data, user_id):
         """Update an existing hostel"""
+        from ..models.landlord import Landlord
+
+        # Lookup landlord profile for the user
+        landlord = Landlord.query.filter_by(user_id=user_id).first()
+        if not landlord:
+            raise ValueError("Landlord profile not found for user")
+
         hostel = Hostel.query.filter_by(
             id=hostel_id,
-            landlord_id=landlord_id
+            landlord_id=landlord.id
         ).first_or_404()
 
         try:
@@ -197,11 +211,18 @@ class HostelService:
             raise e
 
     @staticmethod
-    def delete_hostel(hostel_id, landlord_id):
+    def delete_hostel(hostel_id, user_id):
         """Delete a hostel"""
+        from ..models.landlord import Landlord
+
+        # Lookup landlord profile for the user
+        landlord = Landlord.query.filter_by(user_id=user_id).first()
+        if not landlord:
+            raise ValueError("Landlord profile not found for user")
+
         hostel = Hostel.query.filter_by(
             id=hostel_id,
-            landlord_id=landlord_id
+            landlord_id=landlord.id
         ).first_or_404()
 
         try:
@@ -213,9 +234,21 @@ class HostelService:
             raise e
 
     @staticmethod
-    def get_hostels_by_landlord(landlord_id, page=1, per_page=20):
+    def get_hostels_by_landlord(user_id, page=1, per_page=20):
         """Get all hostels for a specific landlord"""
-        hostels = Hostel.query.filter_by(landlord_id=landlord_id)\
+        from ..models.landlord import Landlord
+
+        # Lookup landlord profile for the user
+        landlord = Landlord.query.filter_by(user_id=user_id).first()
+        if not landlord:
+            return {
+                'hostels': [],
+                'total': 0,
+                'pages': 0,
+                'current_page': page
+            }
+
+        hostels = Hostel.query.filter_by(landlord_id=landlord.id)\
             .paginate(page=page, per_page=per_page, error_out=False)
 
         return {

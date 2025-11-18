@@ -13,12 +13,12 @@ class Hostel(db.Model):
     price = db.Column(db.Float, nullable=False)
     currency = db.Column(db.String(3), default="KES")
     capacity = db.Column(db.Integer, nullable=False)
-    room_type = db.Column(db.String(50), nullable=False)  # single, double, shared, etc.
+    room_type = db.Column(db.String(50), nullable=False, default="shared")
     landlord_id = db.Column(db.Integer, db.ForeignKey('landlords.id'), nullable=False)
-    images = db.Column(db.JSON)  # Array of image URLs
-    amenities = db.Column(db.JSON)  # Array of amenity IDs
-    features = db.Column(db.JSON)  # JSON object with bedrooms, bathrooms, furnished, etc.
-    availability = db.Column(db.JSON)  # JSON object with available dates, minimum stay, etc.
+    images = db.Column(db.JSON, default=list)         # default empty list
+    amenities = db.Column(db.JSON, default=dict)      # default empty dict
+    features = db.Column(db.JSON, default=dict)       # default empty dict
+    availability = db.Column(db.JSON, default=dict)   # default empty dict
     is_verified = db.Column(db.Boolean, default=False)
     is_featured = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -43,7 +43,7 @@ class Hostel(db.Model):
             "room_type": self.room_type,
             "landlord_id": self.landlord_id,
             "images": self.images or [],
-            "amenities": self.amenities or [],
+            "amenities": self.amenities or {},
             "features": self.features or {},
             "availability": self.availability or {},
             "is_verified": self.is_verified,

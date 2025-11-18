@@ -1,5 +1,6 @@
 from ..extensions import db
 from datetime import datetime
+from sqlalchemy.dialects.postgresql import JSON
 
 class Review(db.Model):
     __tablename__ = "reviews"

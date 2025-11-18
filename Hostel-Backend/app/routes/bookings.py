@@ -164,6 +164,15 @@ def get_landlord_bookings():
     except Exception as e:
         return jsonify({"message": "Failed to fetch landlord bookings", "error": str(e)}), 500
 
+@bookings_bp.get("/available-rooms/<int:hostel_id>")
+def get_available_rooms(hostel_id):
+    """Get the number of available rooms for a hostel"""
+    try:
+        available_rooms = BookingService.get_available_rooms(hostel_id)
+        return jsonify({"available_rooms": available_rooms}), 200
+    except Exception as e:
+        return jsonify({"message": "Failed to get available rooms", "error": str(e)}), 500
+
 @bookings_bp.get("/stats/<int:hostel_id>")
 @jwt_required()
 @landlord_required

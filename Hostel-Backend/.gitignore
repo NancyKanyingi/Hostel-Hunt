@@ -41,6 +41,9 @@ htmlcov/
 *.db
 *.sqlite3
 
+# PostgreSQL data directory (if running locally)
+pgdata/
+
 # Alembic / migrations (if you keep migrations in repo you can remove this)
 migrations/
 alembic.ini

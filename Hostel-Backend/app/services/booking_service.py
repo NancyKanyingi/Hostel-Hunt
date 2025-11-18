@@ -1,6 +1,7 @@
 from ..extensions import db
 from ..models.booking import Booking
 from ..models.hostel import Hostel
+from ..models.user import User
 from datetime import datetime, date
 from sqlalchemy import and_, or_
 
@@ -8,6 +9,13 @@ class BookingService:
     @staticmethod
     def create_booking(user_id, hostel_id, check_in, check_out, guests):
         """Create a new booking"""
+        # Get user to check role
+        user = User.query.get_or_404(user_id)
+
+        # Prevent landlords from booking rooms
+        if user.role == 'landlord':
+            raise ValueError("Landlords cannot book rooms")
+
         # Validate dates
         check_in_date = date.fromisoformat(check_in)
         check_out_date = date.fromisoformat(check_out)
@@ -212,6 +220,47 @@ class BookingService:
             'pages': bookings.pages,
             'current_page': bookings.page
         }
+
+    @staticmethod
+    def get_available_rooms(hostel_id, check_in=None, check_out=None):
+        """Get the number of available rooms for a hostel"""
+        hostel = Hostel.query.get_or_404(hostel_id)
+        max_capacity = hostel.capacity
+
+        # If no dates provided, get current availability
+        if not check_in or not check_out:
+            # Count current confirmed bookings
+            current_bookings = Booking.query.filter(
+                and_(
+                    Booking.hostel_id == hostel_id,
+                    Booking.status.in_(['confirmed', 'upcoming']),
+                    Booking.check_out >= date.today()  # Only future bookings
+                )
+            ).all()
+
+            total_guests_booked = sum(booking.guests for booking in current_bookings)
+            available_rooms = max(0, max_capacity - total_guests_booked)
+        else:
+            # Check availability for specific dates
+            check_in_date = date.fromisoformat(check_in) if isinstance(check_in, str) else check_in
+            check_out_date = date.fromisoformat(check_out) if isinstance(check_out, str) else check_out
+
+            overlapping_bookings = Booking.query.filter(
+                and_(
+                    Booking.hostel_id == hostel_id,
+                    Booking.status.in_(['confirmed', 'upcoming']),
+                    or_(
+                        and_(Booking.check_in <= check_in_date, Booking.check_out > check_in_date),
+                        and_(Booking.check_in < check_out_date, Booking.check_out >= check_out_date),
+                        and_(Booking.check_in >= check_in_date, Booking.check_out <= check_out_date)
+                    )
+                )
+            ).all()
+
+            total_guests_booked = sum(booking.guests for booking in overlapping_bookings)
+            available_rooms = max(0, max_capacity - total_guests_booked)
+
+        return available_rooms
 
     @staticmethod
     def get_booking_stats(hostel_id=None, landlord_id=None):

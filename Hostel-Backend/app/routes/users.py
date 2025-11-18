@@ -46,7 +46,7 @@ def change_password():
         return jsonify({"message": "Current password and new password are required"}), 400
 
     if not is_valid_password(new_password):
-        return jsonify({"message": "New password must be at least 6 characters"}), 400
+        return jsonify({"message": "New password must be at least 8 characters with uppercase, lowercase, number, and special character"}), 400
 
     try:
         UserService.change_password(user_id, current_password, new_password)

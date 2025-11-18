@@ -1,15 +1,17 @@
 // src/components/Card.jsx - FINAL WORKING VERSION
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const Card = ({ room, index = 0 }) => {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [availableRooms, setAvailableRooms] = useState(null);
 
   if (!room) return null;
 
   const {
+    id,
     slug,
     title,
     location,
@@ -25,6 +27,25 @@ const Card = ({ room, index = 0 }) => {
     verified,
     borderColor = 'border-gray-200'
   } = room;
+
+  // Fetch available rooms count
+  useEffect(() => {
+    const fetchAvailableRooms = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/bookings/available-rooms/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableRooms(data.available_rooms);
+        }
+      } catch (error) {
+        console.error('Failed to fetch available rooms:', error);
+      }
+    };
+
+    if (id) {
+      fetchAvailableRooms();
+    }
+  }, [id]);
 
   // Fallback image
   const displayImage = imgError 
@@ -95,9 +116,15 @@ const Card = ({ room, index = 0 }) => {
             </div>
 
             {/* Availability Badge */}
-            {availability?.available && (
-              <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded shadow-md">
-                Available
+            {availableRooms !== null && (
+              <span className={`absolute top-2 right-2 text-white text-xs font-bold px-2 py-1 rounded shadow-md ${
+                availableRooms === 0
+                  ? 'bg-red-500'
+                  : availableRooms <= 2
+                  ? 'bg-orange-500'
+                  : 'bg-green-500'
+              }`}>
+                {availableRooms === 0 ? 'Fully Booked' : `${availableRooms} rooms left`}
               </span>
             )}
 
@@ -159,17 +186,17 @@ const Card = ({ room, index = 0 }) => {
               <div className="flex items-center gap-3 text-xs text-gray-500 mb-3 pb-3 border-b">
                 {features.bedrooms !== undefined && (
                   <span className="flex items-center gap-1">
-                    🛏️ {features.bedrooms > 0 ? `${features.bedrooms} BR` : 'Studio'}
+                      {features.bedrooms > 0 ? `${features.bedrooms} BR` : 'Studio'}
                   </span>
                 )}
                 {features.bathrooms && (
                   <span className="flex items-center gap-1">
-                    🚿 {features.bathrooms} BA
+                      {features.bathrooms} BA
                   </span>
                 )}
                 {features.furnished && (
                   <span className="flex items-center gap-1">
-                    🪑 Furnished
+                      Furnished
                   </span>
                 )}
               </div>

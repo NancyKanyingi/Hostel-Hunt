@@ -37,7 +37,7 @@ export default function ConfirmationPage() {
               <p><strong>Check-in:</strong> {new Date(booking.checkIn).toLocaleDateString()}</p>
               <p><strong>Check-out:</strong> {new Date(booking.checkOut).toLocaleDateString()}</p>
               <p><strong>Guests:</strong> {booking.guests}</p>
-              <p><strong>Total Paid:</strong> ${booking.totalPrice}</p>
+              <p><strong>Total Amount to be Paid:</strong> KSh {booking.totalPrice}</p>
             </div>
           </div>
 
