@@ -12,6 +12,22 @@ export function BookingProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+const normalizeBooking = (b) => ({
+    id: b.id,
+    userId: b.user_id,
+    hostelId: b.hostel_id,
+    checkIn: b.check_in,
+    checkOut: b.check_out,
+    guests: b.guests,
+    totalPrice: b.total_price,
+    currency: b.currency,
+    status: b.status,
+    bookingDate: b.booking_date,
+    createdAt: b.created_at,
+    updatedAt: b.updated_at,
+  });
+
+
   useEffect(() => {
     loadUserBookings();
     loadFavorites();
@@ -32,7 +48,8 @@ export function BookingProvider({ children }) {
 
       if (response.ok) {
         const data = await response.json();
-        setBookings(data.bookings || []);
+
+        setBookings(data.bookings || [].map(normalizeBooking));
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Failed to load bookings' }));
         setError(errorData.message || 'Failed to load bookings');

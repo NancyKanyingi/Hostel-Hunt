@@ -2,8 +2,11 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..services.booking_service import BookingService
 from ..services.notification_service import NotificationService
-from ..services.payment_service import PaymentService
-from ..middleware.auth_middleware import landlord_required
+try:
+    from ..services.payment_service import PaymentService
+except ImportError:
+    PaymentService = None
+from ..middleware.auth_middleware import landlord_required, student_required
 from ..utils.validator import is_valid_phone
 from datetime import datetime
 
@@ -11,6 +14,7 @@ bookings_bp = Blueprint("bookings", __name__, url_prefix="/bookings")
 
 @bookings_bp.post("/")
 @jwt_required()
+@student_required
 def create_booking():
     """Create a new booking"""
     user_id = get_jwt_identity()
@@ -98,7 +102,7 @@ def cancel_booking(booking_id):
     except Exception as e:
         return jsonify({"message": "Failed to cancel booking", "error": str(e)}), 500
 
-@bookings_bp.get("/hostel/<int:hostel_id>")
+@bookings_bp.get("/hostel/<int:hostel_id>/bookings")
 @jwt_required()
 @landlord_required
 def get_hostel_bookings(hostel_id):
@@ -154,7 +158,7 @@ def get_landlord_bookings():
         status = request.args.get('status')
 
         result = BookingService.get_landlord_bookings(
-            landlord_id=user_id,
+            user_id=user_id,
             page=page,
             per_page=per_page,
             status=status
@@ -215,6 +219,9 @@ def mpesa_callback():
     try:
         callback_data = request.get_json()
 
+        if PaymentService is None:
+            return jsonify({"message": "Payment service not available"}), 503
+
         # Process the callback
         result = PaymentService.handle_mpesa_callback(callback_data)
 
@@ -238,13 +245,19 @@ def check_payment_status(booking_id):
         # Verify booking belongs to user
         booking = BookingService.get_booking_by_id(booking_id, user_id)
 
-        # In a real implementation, you'd check the payment status from your payments table
-        # For now, return a mock response
-        return jsonify({
-            "booking_id": booking_id,
-            "status": "pending",  # This would be checked from your payment records
-            "message": "Payment status checked"
-        }), 200
+        if PaymentService is None:
+            
+            return jsonify({
+                "booking_id": booking_id,
+                "status": "pending",  # This would be checked from your payment records
+                "message": "Payment status checked"
+            }), 200
+
+        # Check payment status using PaymentService
+        status_result = PaymentService.check_payment_status(booking_id)
+        return jsonify(status_result), 200
 
     except Exception as e:
         return jsonify({"message": "Failed to check payment status", "error": str(e)}), 500
+
+
