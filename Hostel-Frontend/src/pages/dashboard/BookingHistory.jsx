@@ -72,7 +72,7 @@ export default function BookingHistory() {
 
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-500">
-                    Booked on {new Date(booking.bookingDate).toLocaleDateString()}
+                    Booked on {booking.booking_date ? new Date(booking.booking_date).toLocaleDateString() : 'N/A'}
                   </p>
                   {booking.status === 'upcoming' && (
                     <Link

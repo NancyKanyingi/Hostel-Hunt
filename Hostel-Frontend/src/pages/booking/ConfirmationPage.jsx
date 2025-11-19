@@ -34,10 +34,10 @@ export default function ConfirmationPage() {
             <h2 className="text-xl font-semibold mb-4">{hostel.name}</h2>
             <div className="space-y-2 text-left">
               <p><strong>Booking ID:</strong> #{booking.id}</p>
-              <p><strong>Check-in:</strong> {new Date(booking.checkIn).toLocaleDateString()}</p>
-              <p><strong>Check-out:</strong> {new Date(booking.checkOut).toLocaleDateString()}</p>
+              <p><strong>Check-in:</strong> {new Date(booking.check_in).toLocaleDateString()}</p>
+              <p><strong>Check-out:</strong> {new Date(booking.check_out).toLocaleDateString()}</p>
               <p><strong>Guests:</strong> {booking.guests}</p>
-              <p><strong>Total Paid:</strong> ${booking.totalPrice}</p>
+              <p><strong>Total Paid:</strong> KES{booking.total_price}</p>
             </div>
           </div>
 

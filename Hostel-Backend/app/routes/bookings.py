@@ -2,7 +2,10 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..services.booking_service import BookingService
 from ..services.notification_service import NotificationService
-from ..services.payment_service import PaymentService
+try:
+    from ..services.payment_service import PaymentService
+except ImportError:
+    PaymentService = None
 from ..middleware.auth_middleware import landlord_required, student_required
 from ..utils.validator import is_valid_phone
 from datetime import datetime
@@ -216,6 +219,9 @@ def mpesa_callback():
     try:
         callback_data = request.get_json()
 
+        if PaymentService is None:
+            return jsonify({"message": "Payment service not available"}), 503
+
         # Process the callback
         result = PaymentService.handle_mpesa_callback(callback_data)
 
@@ -239,13 +245,17 @@ def check_payment_status(booking_id):
         # Verify booking belongs to user
         booking = BookingService.get_booking_by_id(booking_id, user_id)
 
-        # In a real implementation, you'd check the payment status from your payments table
-        # For now, return a mock response
-        return jsonify({
-            "booking_id": booking_id,
-            "status": "pending",  # This would be checked from your payment records
-            "message": "Payment status checked"
-        }), 200
+        if PaymentService is None:
+            
+            return jsonify({
+                "booking_id": booking_id,
+                "status": "pending",  # This would be checked from your payment records
+                "message": "Payment status checked"
+            }), 200
+
+        # Check payment status using PaymentService
+        status_result = PaymentService.check_payment_status(booking_id)
+        return jsonify(status_result), 200
 
     except Exception as e:
         return jsonify({"message": "Failed to check payment status", "error": str(e)}), 500
