@@ -3,10 +3,17 @@ import { useBooking } from '../../context/BookingContext.jsx';
 
 export default function ConfirmationPage() {
   const { bookingId } = useParams();
-  const { getBookingById, getHostelById } = useBooking();
+  const { getBookingById } = useBooking();
 
   const booking = getBookingById(bookingId);
-  const hostel = booking ? getHostelById(booking.hostelId) : null;
+
+  // Normalize booking fields from API (snake_case) so the UI can safely display them
+  const hostel = booking?.hostel || null;
+  const checkIn = booking?.check_in || booking?.checkIn;
+  const checkOut = booking?.check_out || booking?.checkOut;
+  const guests = booking?.guests;
+  const totalPrice = booking?.total_price ?? booking?.totalPrice;
+  const currency = booking?.currency === 'KES' ? 'KSh' : booking?.currency || 'KSh';
 
   if (!booking || !hostel) {
     return <div className="min-h-screen flex items-center justify-center">Booking not found</div>;
@@ -34,10 +41,10 @@ export default function ConfirmationPage() {
             <h2 className="text-xl font-semibold mb-4">{hostel.name}</h2>
             <div className="space-y-2 text-left">
               <p><strong>Booking ID:</strong> #{booking.id}</p>
-              <p><strong>Check-in:</strong> {new Date(booking.checkIn).toLocaleDateString()}</p>
-              <p><strong>Check-out:</strong> {new Date(booking.checkOut).toLocaleDateString()}</p>
-              <p><strong>Guests:</strong> {booking.guests}</p>
-              <p><strong>Total Paid:</strong> ${booking.totalPrice}</p>
+              <p><strong>Check-in:</strong> {checkIn ? new Date(checkIn).toLocaleDateString() : 'N/A'}</p>
+              <p><strong>Check-out:</strong> {checkOut ? new Date(checkOut).toLocaleDateString() : 'N/A'}</p>
+              <p><strong>Guests:</strong> {guests}</p>
+              <p><strong>Total Paid:</strong> {currency} {totalPrice ?? 'N/A'}</p>
             </div>
           </div>
 

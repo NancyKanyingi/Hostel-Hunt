@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useBooking } from '../../context/BookingContext.jsx';
 
 export default function BookingHistory() {
-  const { bookings, getHostelById } = useBooking();
+  const { bookings } = useBooking();
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -36,7 +36,7 @@ export default function BookingHistory() {
       ) : (
         <div className="space-y-6">
           {bookings.map((booking) => {
-            const hostel = getHostelById(booking.hostelId);
+            const hostel = booking.hostel;
             if (!hostel) return null;
 
             return (
@@ -54,11 +54,19 @@ export default function BookingHistory() {
                 <div className="grid md:grid-cols-4 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-gray-500">Check-in</p>
-                    <p className="font-medium">{booking.check_in ? new Date(booking.check_in).toLocaleDateString() : 'Invalid date'}</p>
+                    <p className="font-medium">
+                      {(booking.check_in || booking.checkIn)
+                        ? new Date(booking.check_in || booking.checkIn).toLocaleDateString()
+                        : 'N/A'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Check-out</p>
-                    <p className="font-medium">{booking.check_out ? new Date(booking.check_out).toLocaleDateString() : 'Invalid date'}</p>
+                    <p className="font-medium">
+                      {(booking.check_out || booking.checkOut)
+                        ? new Date(booking.check_out || booking.checkOut).toLocaleDateString()
+                        : 'N/A'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Guests</p>
@@ -66,13 +74,19 @@ export default function BookingHistory() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Total</p>
-                    <p className="font-medium">KSh {booking.total_price || booking.totalPrice || 'N/A'}</p>
+                    <p className="font-medium">
+                      {(booking.currency === 'KES' ? 'KSh' : booking.currency || 'KSh')}{' '}
+                      {booking.total_price ?? booking.totalPrice ?? 'N/A'}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-500">
-                    Booked on {new Date(booking.bookingDate).toLocaleDateString()}
+                    Booked on{' '}
+                    {(booking.booking_date || booking.bookingDate)
+                      ? new Date(booking.booking_date || booking.bookingDate).toLocaleDateString()
+                      : 'N/A'}
                   </p>
                   {booking.status === 'upcoming' && (
                     <Link

@@ -1,7 +1,18 @@
 // src/components/Card.jsx - FINAL WORKING VERSION
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
+import { API_BASE_URL } from '../utils/api';
+
+const buildImageUrl = (img) => {
+  if (!img || typeof img !== 'string') return null;
+  if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('blob:')) return img;
+  if (img.includes('/uploads/')) {
+    const relative = img.slice(img.indexOf('/uploads/'));
+    return `${API_BASE_URL}${relative}`;
+  }
+  return img;
+};
 
 const Card = ({ room, index = 0 }) => {
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -26,10 +37,12 @@ const Card = ({ room, index = 0 }) => {
     borderColor = 'border-gray-200'
   } = room;
 
-  // Fallback image
-  const displayImage = imgError 
-    ? 'https://via.placeholder.com/400x300?text=No+Image'
-    : images?.[0] || 'https://via.placeholder.com/400x300?text=Room+Image';
+  const normalizedImages = Array.isArray(images)
+    ? images.map(buildImageUrl).filter(Boolean)
+    : [];
+  const primaryImage = normalizedImages[0] || null;
+
+  const displayImage = imgError ? null : primaryImage;
 
   // Format price
   const formatPrice = (amount) => {
@@ -40,7 +53,7 @@ const Card = ({ room, index = 0 }) => {
   const topAmenities = amenities.slice(0, 3);
 
   return (
-    <motion.div
+    <Motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -60,22 +73,30 @@ const Card = ({ room, index = 0 }) => {
           {/* Image Container */}
           <div className="relative h-48 bg-gray-200 overflow-hidden flex-shrink-0">
             {/* Loading State */}
-            {!imgLoaded && !imgError && (
+            {!imgLoaded && !imgError && displayImage && (
               <div className="absolute inset-0 animate-pulse bg-gray-300" />
             )}
-            
-            {/* Image */}
-            <img
-              src={displayImage}
-              alt={title}
-              onLoad={() => setImgLoaded(true)}
-              onError={() => setImgError(true)}
-              className={`
-                w-full h-full object-cover 
-                group-hover:scale-110 transition-transform duration-500
-                ${imgLoaded ? 'opacity-100' : 'opacity-0'}
-              `}
-            />
+
+            {displayImage ? (
+              <img
+                src={displayImage}
+                alt={title}
+                onLoad={() => setImgLoaded(true)}
+                onError={() => setImgError(true)}
+                className={`
+                  w-full h-full object-cover 
+                  group-hover:scale-110 transition-transform duration-500
+                  ${imgLoaded ? 'opacity-100' : 'opacity-0'}
+                `}
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                <svg className="w-10 h-10 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                </svg>
+                <span className="text-xs">No image available</span>
+              </div>
+            )}
 
             {/* Badges Row */}
             <div className="absolute top-2 left-2 flex gap-2">
@@ -213,7 +234,7 @@ const Card = ({ room, index = 0 }) => {
           </div>
         </div>
       </Link>
-    </motion.div>
+    </Motion.div>
   );
 };
 

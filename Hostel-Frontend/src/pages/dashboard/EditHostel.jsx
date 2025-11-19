@@ -3,6 +3,16 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../../utils/api";
 
+const buildImageUrl = (img) => {
+  if (!img || typeof img !== "string") return null;
+  if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("blob:")) return img;
+  if (img.includes("/uploads/")) {
+    const relative = img.slice(img.indexOf("/uploads/"));
+    return `${API_BASE_URL}${relative}`;
+  }
+  return img;
+};
+
 const universities = [
   "University of Nairobi",
   "Kenyatta University",
@@ -252,9 +262,10 @@ const EditHostel = () => {
               {formData.images.map((image, index) => (
                 <img
                   key={index}
-                  src={image}
+                  src={buildImageUrl(image)}
                   alt={`Hostel image ${index + 1}`}
                   className="w-20 h-20 object-cover rounded border"
+                  onError={(e) => { e.target.style.display = "none"; }}
                 />
               ))}
             </div>

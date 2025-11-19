@@ -1,30 +1,25 @@
 import os
-from datetime import timedelta
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "supersecret123")
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL", "postgresql://postgres:limo91we@localhost:5432/hostel-hunt"
-    )
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-secret-key'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "jwtsecret123")
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=7500000)
-    JWT_CSRF_IN_COOKIES = True
-
-    # CORS configuration
-    CORS_HEADERS = 'Content-Type'
-    CORS_ORIGINS = [
-        "http://localhost:5173", "http://127.0.0.1:5173",
-        "http://localhost:5174", "http://127.0.0.1:5174",
-        "http://localhost:5175", "http://127.0.0.1:5175",
-        "http://localhost:5176", "http://127.0.0.1:5176",
-        "http://localhost:5177", "http://127.0.0.1:5177",
-        "http://localhost:5178", "http://127.0.0.1:5178",
-        "http://localhost:5179", "http://127.0.0.1:5179",
-        "http://localhost:3000", "http://127.0.0.1:3000",
-        "http://localhost:3001", "http://127.0.0.1:3001",
-        "http://localhost:8080", "http://127.0.0.1:8080"
-    ]  # Frontend dev servers
-    CORS_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    CORS_ALLOW_HEADERS = ["Content-Type", "Authorization"]
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-key'
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
+    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') or True
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get('JWT_ACCESS_TOKEN_EXPIRE_MINUTES') or 15)
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS = int(os.environ.get('JWT_REFRESH_TOKEN_EXPIRE_DAYS') or 30)
+    # Store uploads in an absolute path so Flask can reliably serve them
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or os.path.join(BASE_DIR, 'uploads')
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH') or 16 * 1024 * 1024)  # 16MB
+    DEBUG = os.environ.get('DEBUG') or True
+    TESTING = os.environ.get('TESTING') or False
+    CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization']
+    CORS_ORIGINS = os.environ.get('CORS_ORIGINS') or 'http://localhost:5174'
+    CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
     CORS_SUPPORTS_CREDENTIALS = True

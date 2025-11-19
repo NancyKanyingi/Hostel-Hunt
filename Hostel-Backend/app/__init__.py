@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from config import Config
 # app/__init__.py
 from .routes.admin import admin_bp  # your admin routes
@@ -27,7 +27,9 @@ except Exception:
     users_bp = None
 try:
     from .routes.bookings import bookings_bp
-except Exception:
+except Exception as e:
+    # Log why bookings blueprint failed to import so we can diagnose missing /bookings/ routes
+    print("[startup] Failed to import bookings_bp:", repr(e))
     bookings_bp = None
 try:
     from .routes.review import reviews_bp
@@ -48,41 +50,52 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Initialize CORS
-    CORS(app, origins=app.config['CORS_ORIGINS'],
-         methods=app.config['CORS_METHODS'],
-         allow_headers=app.config['CORS_ALLOW_HEADERS'],
-         supports_credentials=app.config['CORS_SUPPORTS_CREDENTIALS'])
+    # Initialize CORS properly
+    CORS(
+        app,
+        origins=app.config['CORS_ORIGINS'],  # now always a list
+        methods=app.config['CORS_METHODS'],
+        allow_headers=app.config['CORS_ALLOW_HEADERS'],
+        supports_credentials=app.config['CORS_SUPPORTS_CREDENTIALS']
+    )
 
     # Initialize extensions
     db.init_app(app)
-    migrate = Migrate(app, db)
+    with app.app_context():
+        db.create_all()
+    Migrate(app, db)
+
     try:
         jwt.init_app(app)
     except Exception:
-        # JWT extension may be optional in some environments
         pass
+
     try:
-        mail.init_app(app)
+        if mail is not None:
+            mail.init_app(app)
     except Exception:
         pass
 
     # Register blueprints
     app.register_blueprint(auth_bp)
-    if hostels_bp is not None:
-        app.register_blueprint(hostels_bp, url_prefix="/hostels")
-    if users_bp is not None:
-        app.register_blueprint(users_bp, url_prefix="/users")
-    if bookings_bp is not None:
-        app.register_blueprint(bookings_bp, url_prefix="/bookings")
-    if reviews_bp is not None:
-        app.register_blueprint(reviews_bp, url_prefix="/reviews")
-    if search_bp is not None:
-        app.register_blueprint(search_bp, url_prefix="/search")
-    if analytics_bp is not None:
-        app.register_blueprint(analytics_bp, url_prefix="/analytics")
+    if hostels_bp: app.register_blueprint(hostels_bp, url_prefix="/hostels")
+    if users_bp: app.register_blueprint(users_bp, url_prefix="/users")
+    if bookings_bp: app.register_blueprint(bookings_bp)
+    if reviews_bp: app.register_blueprint(reviews_bp, url_prefix="/reviews")
+    if search_bp: app.register_blueprint(search_bp, url_prefix="/search")
+    if analytics_bp: app.register_blueprint(analytics_bp, url_prefix="/analytics")
 
-    # Register admin blueprint
     app.register_blueprint(admin_bp, url_prefix="/admin")
+
+    # Debug: print bookings-related routes at startup so we can verify /bookings/ is registered
+    print("URL MAP (bookings-related rules) at startup:")
+    for rule in sorted(app.url_map.iter_rules(), key=lambda r: r.rule):
+        if "bookings" in rule.rule:
+            print(f"- {rule.rule}  methods={sorted(rule.methods)}  endpoint={rule.endpoint}")
+
+    # Serve uploaded images
+    @app.route('/uploads/<filename>')
+    def uploaded_file(filename):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
     return app

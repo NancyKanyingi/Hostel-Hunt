@@ -9,6 +9,11 @@ from datetime import datetime
 
 bookings_bp = Blueprint("bookings", __name__, url_prefix="/bookings")
 
+@bookings_bp.route("/", methods=["OPTIONS"])
+def bookings_options():
+    """CORS preflight handler for /bookings/"""
+    return "", 200
+
 @bookings_bp.post("/")
 @jwt_required()
 @student_required
