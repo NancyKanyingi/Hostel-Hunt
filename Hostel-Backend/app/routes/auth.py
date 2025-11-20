@@ -5,6 +5,18 @@ from ..utils.validator import is_valid_email, is_valid_password, is_valid_phone
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
+
+# --- CORS Preflight Support ---
+@auth_bp.route("/register", methods=["OPTIONS"])
+def register_options():
+    return "", 200
+
+@auth_bp.route("/login", methods=["OPTIONS"])
+def login_options():
+    return "", 200
+# --------------------------------
+
+
 # Register
 @auth_bp.post("/register")
 def register():
@@ -27,14 +39,16 @@ def register():
     if role not in ["student", "landlord"]:
         return jsonify({"message": "Invalid role"}), 400
 
-    response, error = AuthService.register(email, password, name=name, phone_number=phone_number, role=role)
+    response, error = AuthService.register(
+        email, password, name=name, phone_number=phone_number, role=role
+    )
     if error:
         return jsonify({"message": error}), 400
 
     return jsonify({"message": "Registration successful", **response}), 201
 
 
-# Login 
+# Login
 @auth_bp.post("/login")
 def login():
     data = request.get_json()
@@ -45,7 +59,7 @@ def login():
     if not email or not is_valid_email(email):
         return jsonify({"message": "Invalid email address"}), 400
     if not password or not is_valid_password(password):
-        return jsonify({"message": "Password must be at least 6 characters"}), 400
+        return jsonify({"message": "Password must be at least 8 characters with uppercase, lowercase, number, and special character"}), 400
 
     response, error = AuthService.login(email, password)
     if error:

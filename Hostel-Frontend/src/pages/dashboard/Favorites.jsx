@@ -1,6 +1,17 @@
 import { Link } from 'react-router-dom';
 import { useBooking } from '../../context/BookingContext.jsx';
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../utils/api';
+
+const buildHostelImageUrl = (img) => {
+  if (!img || typeof img !== 'string') return null;
+  if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('blob:')) return img;
+  if (img.includes('/uploads/')) {
+    const relative = img.slice(img.indexOf('/uploads/'));
+    return `${API_BASE_URL}${relative}`;
+  }
+  return img;
+};
 
 export default function Favorites() {
   const { favorites, toggleFavorite, getHostelById } = useBooking();
@@ -56,11 +67,18 @@ export default function Favorites() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {favoriteHostels.map((hostel) => (
             <div key={hostel.id} className="bg-white border rounded-lg overflow-hidden shadow-sm">
-              <img
-                src={hostel.images && hostel.images.length > 0 ? hostel.images[0] : '/placeholder.jpg'}
-                alt={hostel.name}
-                className="w-full h-48 object-cover"
-              />
+              {hostel.images && hostel.images.length > 0 ? (
+                <img
+                  src={buildHostelImageUrl(hostel.images[0])}
+                  alt={hostel.name}
+                  className="w-full h-48 object-cover"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-full h-48 flex items-center justify-center bg-gray-200 text-gray-500">
+                  No image available
+                </div>
+              )}
               <div className="p-6">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-xl font-semibold">{hostel.name}</h3>

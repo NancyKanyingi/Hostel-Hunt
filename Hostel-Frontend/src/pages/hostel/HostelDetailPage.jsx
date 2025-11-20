@@ -3,8 +3,26 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { fetchRoomById } from '../../utils/api';
+import { fetchRoomById, API_BASE_URL } from '../../utils/api';
 import Card from '../../components/Card';
+
+const buildImageUrls = (images) => {
+  if (!images || !Array.isArray(images)) return [];
+
+  return images
+    .map((img) => {
+      if (typeof img !== 'string') return null;
+      if (img.startsWith('http://') || img.startsWith('https://')) {
+        return img;
+      }
+      if (img.includes('/uploads/')) {
+        const relative = img.slice(img.indexOf('/uploads/'));
+        return `${API_BASE_URL}${relative}`;
+      }
+      return img;
+    })
+    .filter(Boolean);
+};
 
 export default function HostelDetailPage() {
   const { id } = useParams();
@@ -49,9 +67,7 @@ export default function HostelDetailPage() {
   }
 
   const room = roomData;
-  const displayImages = room.images && room.images.length > 0 
-    ? room.images 
-    : ['https://via.placeholder.com/800x600?text=No+Image'];
+  const displayImages = buildImageUrls(room.images);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
@@ -91,14 +107,23 @@ export default function HostelDetailPage() {
               className="bg-white rounded-lg shadow-md overflow-hidden"
             >
               <div className="relative h-96 bg-gray-200">
-                <img
-                  src={displayImages[currentImageIndex]}
-                  alt={`${room.title} - Image ${currentImageIndex + 1}`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/800x600?text=Image+Not+Available';
-                  }}
-                />
+                {displayImages.length > 0 ? (
+                  <img
+                    src={displayImages[currentImageIndex]}
+                    alt={`${room.title} - Image ${currentImageIndex + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-text-body">
+                    <svg className="w-16 h-16 text-gray-400 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                    </svg>
+                    <p>No images available for this room yet.</p>
+                  </div>
+                )}
 
                 {/* Navigation Arrows */}
                 {displayImages.length > 1 && (
@@ -158,7 +183,7 @@ export default function HostelDetailPage() {
                         alt={`Thumbnail ${idx + 1}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/80x80?text=No+Image';
+                          e.target.style.display = 'none';
                         }}
                       />
                     </button>

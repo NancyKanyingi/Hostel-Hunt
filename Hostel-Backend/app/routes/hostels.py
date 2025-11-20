@@ -4,7 +4,7 @@ from ..services.hostel_service import HostelService
 from ..middleware.auth_middleware import landlord_required
 from ..utils.validator import is_valid_email
 
-hostels_bp = Blueprint("hostels", __name__, url_prefix="/hostels/")
+hostels_bp = Blueprint("hostels", __name__)
 
 @hostels_bp.get("/")
 def get_hostels():
@@ -41,8 +41,12 @@ def get_hostel(hostel_id):
     try:
         hostel = HostelService.get_hostel_by_id(hostel_id)
         return jsonify(hostel), 200
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            return jsonify({"message": "Hostel not found"}), 404
+        return jsonify({"message": str(e)}), 400
     except Exception as e:
-        return jsonify({"message": "Hostel not found"}), 404
+        return jsonify({"message": "Internal server error", "error": str(e)}), 500
 
 @hostels_bp.post("/")
 @jwt_required()
@@ -50,7 +54,14 @@ def get_hostel(hostel_id):
 def create_hostel():
     """Create a new hostel (landlords only)"""
     user_id = get_jwt_identity()
-    data = request.get_json()
+
+    # Handle multipart/form-data for file uploads
+    if request.content_type.startswith('multipart/form-data'):
+        data = request.form.to_dict()
+        files = request.files.getlist('images')
+    else:
+        data = request.get_json()
+        files = []
 
     # Validate required fields
     required_fields = ['name', 'location', 'price', 'capacity', 'room_type']
@@ -70,8 +81,10 @@ def create_hostel():
         return jsonify({"message": "Invalid data types"}), 400
 
     try:
-        hostel = HostelService.create_hostel(data, user_id)
+        hostel = HostelService.create_hostel(data, user_id, files)
         return jsonify({"message": "Hostel created successfully", "hostel": hostel}), 201
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
     except Exception as e:
         return jsonify({"message": "Failed to create hostel", "error": str(e)}), 500
 
@@ -81,10 +94,17 @@ def create_hostel():
 def update_hostel(hostel_id):
     """Update a hostel (landlord only)"""
     user_id = get_jwt_identity()
-    data = request.get_json()
+
+    # Handle multipart/form-data for file uploads
+    if request.content_type.startswith('multipart/form-data'):
+        data = request.form.to_dict()
+        files = request.files.getlist('images')
+    else:
+        data = request.get_json()
+        files = []
 
     try:
-        hostel = HostelService.update_hostel(hostel_id, data, user_id)
+        hostel = HostelService.update_hostel(hostel_id, data, user_id, files)
         return jsonify({"message": "Hostel updated successfully", "hostel": hostel}), 200
     except Exception as e:
         return jsonify({"message": "Failed to update hostel", "error": str(e)}), 500

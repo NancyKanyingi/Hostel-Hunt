@@ -53,8 +53,7 @@ const CreateHostel = () => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    const imageUrls = files.map(file => URL.createObjectURL(file));
-    setFormData({ ...formData, images: imageUrls });
+    setFormData({ ...formData, images: files });
   };
 
   const handleSubmit = async (e) => {
@@ -63,19 +62,21 @@ const CreateHostel = () => {
 
     try {
       const token = localStorage.getItem("token");
+      const multipart = new FormData();
+      multipart.append('name', formData.name);
+      multipart.append('location', formData.university);
+      multipart.append('price', String(parseFloat(formData.price)));
+      multipart.append('capacity', String(parseInt(formData.rooms, 10) || 1));
+      multipart.append('room_type', 'shared'); // default room_type
+      multipart.append('description', formData.description);
+      multipart.append('amenities', JSON.stringify(formData.amenities));
 
-      const payload = {
-        name: formData.name,
-        location: formData.university,
-        price: parseFloat(formData.price),
-        capacity: parseInt(formData.rooms, 10) || 1,
-        room_type: 'shared', // default room_type
-        description: formData.description,
-        images: formData.images,
-        amenities: formData.amenities
-      };
+      // Attach image files under the "images" field for backend upload handling
+      formData.images.forEach((file) => {
+        multipart.append('images', file);
+      });
 
-      await axios.post(`${API_BASE_URL}/hostels/`, payload, {
+      await axios.post(`${API_BASE_URL}/hostels/`, multipart, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -212,10 +213,10 @@ const CreateHostel = () => {
           />
           {formData.images.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
-              {formData.images.map((image, index) => (
+              {formData.images.map((file, index) => (
                 <img
                   key={index}
-                  src={image}
+                  src={URL.createObjectURL(file)}
                   alt={`Hostel image ${index + 1}`}
                   className="w-20 h-20 object-cover rounded border"
                 />

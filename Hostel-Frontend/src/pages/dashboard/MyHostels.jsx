@@ -3,6 +3,16 @@ import axios from "axios";
 import { API_BASE_URL } from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 
+const buildHostelImageUrl = (img) => {
+  if (!img || typeof img !== "string") return null;
+  if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("blob:")) return img;
+  if (img.includes("/uploads/")) {
+    const relative = img.slice(img.indexOf("/uploads/"));
+    return `${API_BASE_URL}${relative}`;
+  }
+  return img;
+};
+
 const MyHostels = () => {
   const [hostels, setHostels] = useState([]);
   const [error, setError] = useState("");
@@ -57,25 +67,45 @@ const MyHostels = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {hostels.map(hostel => (
-            <div key={hostel.id} className="border p-4 rounded shadow"> {/* Adjusted key */}
-              <h2 className="text-lg font-semibold">{hostel.name}</h2>
-              <p>{hostel.location}</p>
+            <div key={hostel.id} className="border p-4 rounded shadow">
+              <div className="flex gap-4">
+                {hostel.images && hostel.images.length > 0 ? (
+                  <img
+                    src={buildHostelImageUrl(hostel.images[0])}
+                    alt={hostel.name}
+                    className="w-20 h-20 object-cover rounded"
+                    onError={(e) => { e.target.style.display = "none"; }}
+                  />
+                ) : (
+                  <div className="w-20 h-20 flex items-center justify-center bg-gray-200 rounded text-gray-500 text-xs">
+                    No image
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold">{hostel.name}</h2>
+                  <p className="text-gray-600">{hostel.location}</p>
+                  <p className="text-sm text-gray-500">
+                    Available Rooms: {hostel.available_rooms || 0} / {hostel.capacity}
+                  </p>
+                  <p className="text-sm font-medium">KSh {hostel.price}/month</p>
+                </div>
+              </div>
               <div className="mt-2 flex gap-2">
                 <button
                   className="px-2 py-1 bg-yellow-400 rounded"
-                  onClick={() => navigate(`/dashboard/hostels/edit/${hostel.id}`)} // Corrected path
+                  onClick={() => navigate(`/dashboard/hostels/edit/${hostel.id}`)}
                 >
                   Edit
                 </button>
                 <button
                   className="px-2 py-1 bg-red-500 text-white rounded"
-                  onClick={() => handleDelete(hostel.id)} // Adjusted for id
+                  onClick={() => handleDelete(hostel.id)}
                 >
                   Delete
                 </button>
                 <button
                   className="px-2 py-1 bg-gray-200 rounded"
-                  onClick={() => navigate(`/hostel/${hostel.id}`)} // View stays the same
+                  onClick={() => navigate(`/hostel/${hostel.id}`)}
                 >
                   View
                 </button>

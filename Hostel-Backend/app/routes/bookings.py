@@ -3,14 +3,20 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..services.booking_service import BookingService
 from ..services.notification_service import NotificationService
 from ..services.payment_service import PaymentService
-from ..middleware.auth_middleware import landlord_required
+from ..middleware.auth_middleware import landlord_required, student_required
 from ..utils.validator import is_valid_phone
 from datetime import datetime
 
 bookings_bp = Blueprint("bookings", __name__, url_prefix="/bookings")
 
+@bookings_bp.route("/", methods=["OPTIONS"])
+def bookings_options():
+    """CORS preflight handler for /bookings/"""
+    return "", 200
+
 @bookings_bp.post("/")
 @jwt_required()
+@student_required
 def create_booking():
     """Create a new booking"""
     user_id = get_jwt_identity()
@@ -98,7 +104,7 @@ def cancel_booking(booking_id):
     except Exception as e:
         return jsonify({"message": "Failed to cancel booking", "error": str(e)}), 500
 
-@bookings_bp.get("/hostel/<int:hostel_id>")
+@bookings_bp.get("/hostel/<int:hostel_id>/bookings")
 @jwt_required()
 @landlord_required
 def get_hostel_bookings(hostel_id):
@@ -154,7 +160,7 @@ def get_landlord_bookings():
         status = request.args.get('status')
 
         result = BookingService.get_landlord_bookings(
-            landlord_id=user_id,
+            user_id=user_id,
             page=page,
             per_page=per_page,
             status=status
@@ -248,3 +254,5 @@ def check_payment_status(booking_id):
 
     except Exception as e:
         return jsonify({"message": "Failed to check payment status", "error": str(e)}), 500
+
+

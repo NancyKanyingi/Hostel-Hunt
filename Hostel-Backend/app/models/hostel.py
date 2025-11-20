@@ -1,5 +1,6 @@
 from ..extensions import db
 from datetime import datetime
+import json
 
 class Hostel(db.Model):
     __tablename__ = "hostels"
@@ -29,7 +30,46 @@ class Hostel(db.Model):
     bookings = db.relationship('Booking', back_populates='hostel', cascade='all, delete-orphan')
     reviews = db.relationship('Review', back_populates='hostel', cascade='all, delete-orphan')
 
+    @property
+    def available_rooms(self):
+        """Calculate available rooms based on capacity minus current confirmed bookings"""
+        from ..models.booking import Booking
+        from datetime import date
+
+        # Get current confirmed bookings that haven't ended yet
+        current_bookings = Booking.query.filter(
+            Booking.hostel_id == self.id,
+            Booking.status.in_(['confirmed', 'upcoming']),
+            Booking.check_out >= date.today()
+        ).all()
+
+        # Sum all guests from current bookings
+        occupied_guests = sum(booking.guests for booking in current_bookings)
+
+        # Available rooms = total capacity - occupied guests
+        return max(0, self.capacity - occupied_guests)
+
     def to_dict(self):
+        # Normalize stored image paths to web-facing URLs under /uploads/
+        images = self.images or []
+        if isinstance(images, str):
+            try:
+                images = json.loads(images)
+            except Exception:
+                images = [images]
+
+        normalized_images = []
+        for img in images:
+            if not isinstance(img, str):
+                continue
+            if img.startswith("http://") or img.startswith("https://"):
+                normalized_images.append(img)
+            else:
+                # Collapse any absolute filesystem path containing /uploads/ back to a web path
+                if "/uploads/" in img:
+                    img = img[img.index("/uploads/"):]
+                normalized_images.append(img)
+
         return {
             "id": self.id,
             "name": self.name,
@@ -40,9 +80,10 @@ class Hostel(db.Model):
             "price": self.price,
             "currency": self.currency,
             "capacity": self.capacity,
+            "available_rooms": self.available_rooms,
             "room_type": self.room_type,
             "landlord_id": self.landlord_id,
-            "images": self.images or [],
+            "images": normalized_images,
             "amenities": self.amenities or [],
             "features": self.features or {},
             "availability": self.availability or {},
