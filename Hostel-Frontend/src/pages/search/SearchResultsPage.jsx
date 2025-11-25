@@ -194,17 +194,21 @@ const SearchResultsPage = () => {
                     <div>
                       <h3 className="font-semibold text-gray-700 mb-3">Amenities</h3>
                       <div className="space-y-2">
-                        {filterOptions?.amenities.slice(0, 6).map(amenity => (
-                          <label key={amenity} className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={filters.amenities.includes(amenity)}
-                              onChange={() => toggleAmenity(amenity)}
-                              className="rounded text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700">{amenity}</span>
-                          </label>
-                        ))}
+                    {/* Corrected Amenities Mapping */}
+                    {filterOptions?.amenities.slice(0, 6).map(amenity => (
+                      <label key={amenity.id} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          // Check if the ID is in the filters array
+                          checked={filters.amenities.includes(amenity.id)}
+                          // Pass the ID to the toggle function
+                          onChange={() => toggleAmenity(amenity.id)}
+                          className="rounded text-blue-600 focus:ring-blue-500"
+                        />
+                        {/* Render the name string, not the object */}
+                        <span className="text-sm text-gray-700">{amenity.name}</span>
+                      </label>
+                    ))}
                       </div>
                     </div>
 

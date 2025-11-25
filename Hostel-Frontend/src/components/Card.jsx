@@ -1,18 +1,15 @@
-// src/components/Card.jsx - FINAL WORKING VERSION
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion as Motion } from 'framer-motion';
-import { API_BASE_URL } from '../utils/api';
+import { motion } from 'framer-motion';
 
-const buildImageUrl = (img) => {
-  if (!img || typeof img !== 'string') return null;
-  if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('blob:')) return img;
-  if (img.includes('/uploads/')) {
-    const relative = img.slice(img.indexOf('/uploads/'));
-    return `${API_BASE_URL}${relative}`;
-  }
-  return img;
-};
+// Fallback images if listing has no photos
+const FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600&q=80",
+  "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=600&q=80",
+  "https://images.unsplash.com/photo-1522771753033-6a586611bf9e?w=600&q=80",
+  "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=600&q=80",
+  "https://images.unsplash.com/photo-1595524366196-b96a325832ae?w=600&q=80"
+];
 
 const Card = ({ room, index = 0 }) => {
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -21,6 +18,7 @@ const Card = ({ room, index = 0 }) => {
   if (!room) return null;
 
   const {
+    id,
     slug,
     title,
     location,
@@ -37,12 +35,27 @@ const Card = ({ room, index = 0 }) => {
     borderColor = 'border-gray-200'
   } = room;
 
-  const normalizedImages = Array.isArray(images)
-    ? images.map(buildImageUrl).filter(Boolean)
-    : [];
-  const primaryImage = normalizedImages[0] || null;
+  // ROBUST IMAGE SELECTION
+  const displayImage = useMemo(() => {
+    // 1. Filter invalid images first
+    const validImages = images?.filter(img => 
+        img && 
+        typeof img === 'string' && 
+        img.length > 5 && 
+        (img.startsWith('http') || img.startsWith('/')) && 
+        !img.startsWith('blob:')
+    ) || [];
 
-  const displayImage = imgError ? null : primaryImage;
+    // 2. Pick a random valid image
+    if (validImages.length > 0) {
+      const randomIndex = Math.floor(Math.random() * validImages.length);
+      return validImages[randomIndex];
+    }
+
+    // 3. Fallback based on ID (stable)
+    const fallbackIndex = (typeof id === 'number' ? id : index) % FALLBACK_IMAGES.length;
+    return FALLBACK_IMAGES[fallbackIndex];
+  }, [images, id, index]);
 
   // Format price
   const formatPrice = (amount) => {
@@ -52,15 +65,18 @@ const Card = ({ room, index = 0 }) => {
   // Top amenities
   const topAmenities = amenities.slice(0, 3);
 
+  // Link target
+  const linkTarget = `/hostel/${id}`;
+
   return (
-    <Motion.div
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
       className="h-full"
     >
       <Link 
-        to={`/hostel/${slug}`}
+        to={linkTarget}
         className="block h-full group"
       >
         <div className={`
@@ -73,30 +89,22 @@ const Card = ({ room, index = 0 }) => {
           {/* Image Container */}
           <div className="relative h-48 bg-gray-200 overflow-hidden flex-shrink-0">
             {/* Loading State */}
-            {!imgLoaded && !imgError && displayImage && (
+            {!imgLoaded && !imgError && (
               <div className="absolute inset-0 animate-pulse bg-gray-300" />
             )}
-
-            {displayImage ? (
-              <img
-                src={displayImage}
-                alt={title}
-                onLoad={() => setImgLoaded(true)}
-                onError={() => setImgError(true)}
-                className={`
-                  w-full h-full object-cover 
-                  group-hover:scale-110 transition-transform duration-500
-                  ${imgLoaded ? 'opacity-100' : 'opacity-0'}
-                `}
-              />
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-                <svg className="w-10 h-10 mb-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                </svg>
-                <span className="text-xs">No image available</span>
-              </div>
-            )}
+            
+            {/* Image */}
+            <img
+              src={imgError ? FALLBACK_IMAGES[0] : displayImage}
+              alt={title}
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+              className={`
+                w-full h-full object-cover 
+                group-hover:scale-110 transition-transform duration-500
+                ${imgLoaded ? 'opacity-100' : 'opacity-0'}
+              `}
+            />
 
             {/* Badges Row */}
             <div className="absolute top-2 left-2 flex gap-2">
@@ -122,8 +130,8 @@ const Card = ({ room, index = 0 }) => {
               </span>
             )}
 
-            {/* Price Tag */}
-            <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-3 py-1.5 rounded-full shadow-lg">
+            {/* Price Tag - FIXED OPACITY SYNTAX */}
+            <div className="absolute bottom-2 right-2 bg-black/75 text-white px-3 py-1.5 rounded-full shadow-lg">
               <div className="flex items-baseline gap-1">
                 <span className="text-sm font-semibold">{currency}</span>
                 <span className="text-lg font-bold">{formatPrice(price)}</span>
@@ -196,7 +204,7 @@ const Card = ({ room, index = 0 }) => {
               </div>
             )}
 
-            {/* Landlord Info - Pushed to bottom */}
+            {/* Landlord Info */}
             {landlord && (
               <div className="flex items-center justify-between mt-auto">
                 <div className="flex items-center gap-2">
@@ -214,7 +222,7 @@ const Card = ({ room, index = 0 }) => {
                 </div>
 
                 {/* Rating */}
-                {landlord.rating && (
+                {landlord.rating > 0 && (
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
                       <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
@@ -222,7 +230,7 @@ const Card = ({ room, index = 0 }) => {
                     <span className="text-sm font-semibold text-gray-700">
                       {landlord.rating.toFixed(1)}
                     </span>
-                    {landlord.reviewCount && (
+                    {landlord.reviewCount > 0 && (
                       <span className="text-xs text-gray-500">
                         ({landlord.reviewCount})
                       </span>
@@ -234,7 +242,7 @@ const Card = ({ room, index = 0 }) => {
           </div>
         </div>
       </Link>
-    </Motion.div>
+    </motion.div>
   );
 };
 
