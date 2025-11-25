@@ -5,7 +5,7 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "supersecret123")
     
     # Database
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "postgresql://postgres:limo91we@localhost:5432/hostel_hunt")
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "postgresql://postgres:123@localhost:5432/hostel_hunt")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # JWT
@@ -22,7 +22,7 @@ class Config:
     # CORS Configuration
     CORS_HEADERS = 'Content-Type'
     # Add both localhost variations to be safe
-    CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"] 
+    CORS_ORIGINS = ["http://localhost:5174", "http://127.0.0.1:5174"] 
     CORS_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     CORS_ALLOW_HEADERS = ["Content-Type", "Authorization"]
     CORS_SUPPORTS_CREDENTIALS = True
